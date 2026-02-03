@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Запрос #{{ request.id }} - LEXy{% endblock %}
+
+{% block content %}
+<div class="section-padding">
+    <div class="container">
+        <!-- Заголовок и статус -->
+        <div class="row mb-5">
+            <div class="col">
+                <h1 class="display-2 mb-3">Ваш запрос #{{ request.id }}</h1>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="status-badge status-{{ request.status }}">
+                        {{ request.get_status_display }}
+                    </span>
+                    <span class="text-muted">
+                        <i class="bi bi-clock me-1"></i>
+                        Создан: {{ request.created_at|date:"d.m.Y H:i" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Левая колонка: Детали запроса -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="mb-0">Ваша ситуация</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="p-3 bg-light rounded">
+                            {{ request.problem_text|linebreaks }}
+                        </div>
+
+                        <div class="mt-4">
+                            <h5>Категория:</h5>
+                            <span class="badge bg-primary">{{ request.get_category_display }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Блок анализа ИИ (будет позже) -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="mb-0">Анализ ИИ-ассистента</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                            <p class="mt-3">ИИ анализирует вашу ситуацию...</p>
+                            <p class="text-muted small">Это займет несколько секунд</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Правая колонка: Действия и информация -->
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="mb-0">Что дальше?</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h5>1. Анализ ИИ</h5>
+                            <p class="small">ИИ изучает вашу ситуацию и готовит рекомендации по законам РФ.</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>2. Подбор юристов</h5>
+                            <p class="small">Система найдет подходящих юристов под вашу категорию дела.</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5>3. Связь с юристом</h5>
+                            <p class="small">Вы сможете связаться с юристами, которые специализируются на вашем вопросе.</p>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Статус будет обновляться автоматически</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Контактная информация (опционально) -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="mb-0">Хотите добавить контакты?</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="small mb-3">Добавьте телефон или email, чтобы юристы могли с вами связаться:</p>
+                        <form id="contactForm">
+                            <div class="mb-3">
+                                <label class="form-label small">Телефон</label>
+                                <input type="tel" class="form-control" placeholder="+7 (999) 123-45-67">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small">Email</label>
+                                <input type="email" class="form-control" placeholder="your@email.com">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm w-100">Сохранить</button>
+                        </form>
+                        <p class="text-muted small mt-3">Контакты не обязательны. Вы можете остаться анонимным.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Простая логика обновления статуса
+function updateStatus() {
+    fetch(`/api/request/{{ request.id }}/status/`)
+        .then(response => response.json())
+        .then(data => {
+            const statusBadge = document.querySelector('.status-badge');
+            if (data.status !== '{{ request.status }}') {
+                // Если статус изменился, обновляем страницу
+                window.location.reload();
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+// Проверяем статус каждые 5 секунд
+setInterval(updateStatus, 5000);
+</script>
+{% endblock %}

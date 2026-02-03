@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Герой секция -->
+<section class="hero">
+    <div class="hero-content">
+        <p class="hero-tagline">Юридическое агентство</p>
+        <h1 class="display-1 mb-3">LEXy</h1>
+        <p class="hero-subtitle mb-5">
+            Попали в ДТП или другую юридическую ситуацию? Опишите проблему — наш ИИ-ассистент
+            проанализирует ситуацию по законам РФ и подберет проверенного юриста.
+        </p>
+
+        <div class="btn-group">
+            <a href="#help" class="btn btn-primary btn-large">
+                <i class="bi bi-shield-check me-2"></i>Получить помощь
+            </a>
+            <a href="#how-it-works" class="btn btn-outline btn-large">
+                <i class="bi bi-play-circle me-2"></i>Как это работает
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Форма помощи -->
+<section id="help" class="help-section">
+    <div class="help-container">
+        <h2 class="section-title">Опишите вашу ситуацию</h2>
+        <p class="lead text-center mb-5">
+            Не нужно регистрироваться. Просто расскажите, что случилось.
+        </p>
+
+        <div class="help-form">
+            <form id="emergencyForm" method="POST" action="{% url 'submit_request' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="problemText" class="form-label">Что произошло?</label>
+                    <textarea
+                        id="problemText"
+                        name="problem_text"
+                        class="form-control"
+                        placeholder="Например: 'Попал в ДТП, виновник скрылся с места аварии', 'Мне угрожают увольнением без выплаты зарплаты', 'Соседи затопили мою квартиру'..."
+                        required
+                        minlength="20"
+                        rows="5"
+                    ></textarea>
+                    <div id="charCounter" class="form-note"></div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-large">
+                        <i class="bi bi-robot me-2"></i>Проанализировать ситуацию
+                    </button>
+                    <p class="form-note">
+                        Нажимая кнопку, вы соглашаетесь с обработкой данных
+                    </p>
+                </div>
+            </form>
+
+            <div id="formSuccess" style="display: none;">
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="bi bi-check-circle" style="font-size: 4rem; color: var(--accent-gold);"></i>
+                    </div>
+                    <h3 class="mb-3">Запрос отправлен!</h3>
+                    <p class="lead mb-4">ИИ анализирует вашу ситуацию. Это займет несколько секунд.</p>
+                    <a href="#" id="resultLink" class="btn btn-primary">Перейти к результатам</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Как это работает -->
+<section id="how-it-works" class="how-it-works">
+    <div class="container">
+        <h2 class="section-title">Как это работает</h2>
+
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h3 class="step-title">Опишите проблему</h3>
+                <p class="step-description">
+                    Просто напишите, что случилось. Никаких сложных форм и регистрации.
+                    Чем подробнее описание, тем точнее анализ.
+                </p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h3 class="step-title">Анализ ИИ</h3>
+                <p class="step-description">
+                    Наш ИИ-ассистент анализирует ситуацию по законам РФ, определяет
+                    категорию дела и готовит пошаговый план действий.
+                </p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h3 class="step-title">Подбор юриста</h3>
+                <p class="step-description">
+                    Система находит проверенных юристов, которые специализируются
+                    именно на вашей категории дел. Вы сами решаете, с кем связаться.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Юристы (заглушка) -->
+<section id="lawyers" class="help-section">
+    <div class="container">
+        <h2 class="section-title">Наши юристы</h2>
+        <p class="lead text-center mb-5">
+            Более 500 проверенных специалистов по всем отраслям права
+        </p>
+
+        <div class="text-center">
+            <a href="/lawyers/" class="btn btn-outline btn-large">
+                <i class="bi bi-people me-2"></i>Посмотреть всех юристов
+            </a>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('emergencyForm');
+    const problemText = document.getElementById('problemText');
+    const formSuccess = document.getElementById('formSuccess');
+    const resultLink = document.getElementById('resultLink');
+    const charCounter = document.getElementById('charCounter');
+
+    // Счетчик символов
+    problemText.addEventListener('input', function() {
+        const length = this.value.trim().length;
+        charCounter.textContent = `${length} символов`;
+
+        if (length < 20) {
+            charCounter.style.color = '#ef4444';
+        } else if (length < 100) {
+            charCounter.style.color = '#f59e0b';
+        } else {
+            charCounter.style.color = '#10b981';
+        }
+    });
+
+    // Обработка формы
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        if (problemText.value.trim().length < 20) {
+            alert('Опишите проблему подробнее (минимум 20 символов)');
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+
+        // Показываем загрузку
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Анализируем...';
+        submitBtn.disabled = true;
+
+        try {
+            // Отправляем запрос
+            const response = await fetch('{% url "submit_request" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    problem_text: problemText.value.trim()
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Показываем успех
+                form.style.display = 'none';
+                formSuccess.style.display = 'block';
+                resultLink.href = data.redirect_url;
+
+                // Автопереход через 3 секунды
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 3000);
+            } else {
+                alert(data.error || 'Произошла ошибка');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Ошибка соединения. Проверьте интернет и попробуйте снова.');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+    });
+});
+</script>
+{% endblock %}

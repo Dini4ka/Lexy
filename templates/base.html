@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LEXy — Юридическое агентство{% endblock %}</title>
+
+    <!-- Шрифт Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Наши стили -->
+    <link href="/static/css/style.css" rel="stylesheet">
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <!-- Иконки Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="logo">
+                {% if request.site_settings.logo %}
+                    <img src="{{ request.site_settings.logo.url }}" alt="LEXy" class="logo-image">
+                {% else %}
+                    <div class="logo-text">LEX<span>y</span></div>
+                {% endif %}
+            </a>
+
+            <div class="nav-links">
+                <a href="#help" class="nav-link">Помощь</a>
+                <a href="#how-it-works" class="nav-link">Как работает</a>
+                <a href="#lawyers" class="nav-link">Юристы</a>
+                <a href="{% url 'submit_request' %}" class="btn btn-primary">Начать</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Основной контент -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Подвал -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-container">
+                <div>
+                    <div class="footer-logo">
+                        <div class="logo-text">LEX<span>y</span></div>
+                    </div>
+                    <p>Юридическое агентство нового поколения. Быстрая помощь в критических ситуациях.</p>
+                </div>
+
+                <div>
+                    <h4 class="footer-heading">Контакты</h4>
+                    <ul class="footer-links">
+                        <li><a href="mailto:help@lexy.ru" class="footer-link">help@lexy.ru</a></li>
+                        <li><a href="tel:+78001234567" class="footer-link">8-800-123-45-67</a></li>
+                        <li><span class="footer-link">Москва, ул. Юридическая, 15</span></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="footer-heading">Информация</h4>
+                    <ul class="footer-links">
+                        <li><a href="/privacy/" class="footer-link">Конфиденциальность</a></li>
+                        <li><a href="/terms/" class="footer-link">Условия использования</a></li>
+                        <li><a href="/faq/" class="footer-link">Частые вопросы</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>© 2024 LEXy Юридическое агентство. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Скрипты -->
+    <script>
+        // Плавная прокрутка для якорных ссылок
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Фиксированная навигация
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 100) {
+                navbar.style.background = 'rgba(10, 10, 10, 0.98)';
+                navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.3)';
+            } else {
+                navbar.style.background = 'rgba(10, 10, 10, 0.95)';
+                navbar.style.boxShadow = 'none';
+            }
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
