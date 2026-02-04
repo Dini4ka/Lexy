@@ -1,0 +1,378 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="padding-top: 120px;">
+    <!-- Хлебные крошки -->
+    <nav aria-label="breadcrumb" style="margin-bottom: 2rem;">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'request_status' request.id %}">Анализ ситуации</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Чат с {{ lawyer.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Чат -->
+    <div class="chat-container">
+        <!-- Заголовок чата -->
+        <div class="chat-header">
+            <div class="chat-header-content">
+                <div class="chat-lawyer-info">
+                    {% if lawyer.photo %}
+                    <img src="{{ lawyer.photo.url }}" alt="{{ lawyer.name }}" class="chat-lawyer-avatar">
+                    {% else %}
+                    <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(255, 255, 255, 0.05);
+                              border: 2px solid var(--accent-gold); display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-person-circle" style="font-size: 1.5rem; color: var(--text-gray);"></i>
+                    </div>
+                    {% endif %}
+                    <div class="chat-lawyer-details">
+                        <h3>{{ lawyer.name }}</h3>
+                        <p>{{ lawyer.get_specialization_display }}</p>
+                    </div>
+                </div>
+                <div class="chat-status">
+                    <div class="status-dot"></div>
+                    <span>{% if chat.status == 'active' %}Онлайн{% else %}Офлайн{% endif %}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Сообщения -->
+        <div class="chat-messages" id="chatMessages">
+            {% for message in messages %}
+            <div class="message message-{{ message.sender }}">
+                <div class="message-content">{{ message.message }}</div>
+                <div class="message-time">{{ message.timestamp|date:"H:i" }}</div>
+            </div>
+            {% endfor %}
+
+            <!-- Место для новых сообщений -->
+            <div id="newMessages"></div>
+        </div>
+
+        <!-- Поле ввода -->
+        <div class="chat-input-area">
+            <form id="chatForm" class="chat-form">
+                {% csrf_token %}
+                <input type="text"
+                       id="chatInput"
+                       class="chat-input"
+                       placeholder="Введите ваше сообщение..."
+                       autocomplete="off"
+                       {% if chat.status != 'active' %}disabled{% endif %}>
+                <button type="submit"
+                        class="chat-submit"
+                        {% if chat.status != 'active' %}disabled{% endif %}>
+                    <i class="bi bi-send"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Информация о запросе -->
+    <div class="result-card mt-4">
+        <div class="result-card-header">
+            <h3><i class="bi bi-chat-left-text me-2"></i>Информация о запросе</h3>
+        </div>
+        <div class="result-card-body">
+            <p style="color: var(--text-light); margin-bottom: 0.5rem;"><strong>Категория:</strong> {{ request.category }}</p>
+            <p style="color: var(--text-light); margin-bottom: 1rem;"><strong>Срочность:</strong> {{ request.urgency }}</p>
+            <div style="background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: var(--radius-md);">
+                <p style="color: var(--text-gray); font-size: 0.875rem; margin-bottom: 0.5rem;">Исходный запрос:</p>
+                <p style="color: var(--text-light); font-style: italic;">{{ request.problem_text|truncatewords:50 }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Стили для правильного отображения сообщений -->
+<style>
+/* Переопределение стилей для сообщений чата */
+.chat-messages {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 400px;
+}
+
+/* Базовый стиль для всех сообщений */
+.message {
+    max-width: 70%;
+    padding: 1rem 1.25rem;
+    border-radius: 20px;
+    position: relative;
+    line-height: 1.5;
+    word-wrap: break-word;
+    word-break: break-word;
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Сообщения клиента - справа */
+.message-client {
+    align-self: flex-end !important;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(244, 208, 63, 0.1)) !important;
+    border: 1px solid rgba(212, 175, 55, 0.3) !important;
+    border-bottom-right-radius: 5px !important;
+    border-top-right-radius: 20px !important;
+    border-top-left-radius: 20px !important;
+    border-bottom-left-radius: 20px !important;
+    margin-left: auto;
+}
+
+/* Сообщения юриста - слева */
+.message-lawyer {
+    align-self: flex-start !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-bottom-left-radius: 5px !important;
+    border-top-left-radius: 20px !important;
+    border-top-right-radius: 20px !important;
+    border-bottom-right-radius: 20px !important;
+}
+
+/* Системные сообщения */
+.message-system {
+    align-self: center !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 10px !important;
+    max-width: 90%;
+    text-align: center;
+    color: var(--text-gray);
+    font-size: 0.875rem;
+}
+
+.message-content {
+    color: var(--text-light);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: var(--text-gray);
+    margin-top: 0.5rem;
+    text-align: right;
+    opacity: 0.7;
+}
+
+/* Анимация появления новых сообщений */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Индикатор загрузки */
+.message-loading {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+    align-self: flex-start;
+    max-width: 120px;
+    margin: 1rem 0;
+}
+
+.message-loading span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent-gold);
+    animation: bounce 1.4s infinite ease-in-out both;
+    opacity: 0.7;
+}
+
+.message-loading span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.message-loading span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+    40% {
+        transform: scale(1);
+    }
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+    .message {
+        max-width: 85%;
+    }
+
+    .chat-messages {
+        padding: 1rem;
+    }
+
+    .message-content {
+        font-size: 0.95rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const chatMessages = document.getElementById('chatMessages');
+    const newMessagesContainer = document.getElementById('newMessages');
+
+    // Функция для прокрутки вниз
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Автопрокрутка при загрузке
+    setTimeout(scrollToBottom, 100);
+
+    // Отправка сообщения
+    chatForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        // Очищаем поле ввода
+        chatInput.value = '';
+
+        // Добавляем сообщение пользователя
+        addMessage('client', message);
+
+        // Показываем индикатор загрузки
+        showLoadingIndicator();
+
+        try {
+            // Отправляем сообщение на сервер
+            const response = await fetch('{% url "send_message" chat.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    message: message
+                })
+            });
+
+            const data = await response.json();
+
+            // Убираем индикатор загрузки
+            removeLoadingIndicator();
+
+            if (data.success) {
+                // Добавляем ответ юриста
+                addMessage('lawyer', data.message);
+            } else {
+                // Показываем ошибку
+                addMessage('system', 'Ошибка: ' + data.error);
+            }
+
+        } catch (error) {
+            console.error('Error:', error);
+            removeLoadingIndicator();
+            addMessage('system', 'Ошибка соединения. Попробуйте позже.');
+        }
+    });
+
+    // Функция добавления сообщения
+    function addMessage(sender, content) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message message-${sender}`;
+
+        const time = new Date().toLocaleTimeString('ru-RU', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        // Обрабатываем переносы строк
+        const formattedContent = content
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        messageDiv.innerHTML = `
+            <div class="message-content">${formattedContent}</div>
+            <div class="message-time">${time}</div>
+        `;
+
+        newMessagesContainer.appendChild(messageDiv);
+        scrollToBottom();
+    }
+
+    // Функция показа индикатора загрузки
+    function showLoadingIndicator() {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'message-loading';
+        loadingDiv.id = 'loadingIndicator';
+        loadingDiv.innerHTML = `
+            <span></span>
+            <span></span>
+            <span></span>
+        `;
+        newMessagesContainer.appendChild(loadingDiv);
+        scrollToBottom();
+    }
+
+    // Функция удаления индикатора загрузки
+    function removeLoadingIndicator() {
+        const indicator = document.getElementById('loadingIndicator');
+        if (indicator) {
+            indicator.remove();
+        }
+    }
+
+    // Автофокус на поле ввода
+    if (chatInput && !chatInput.disabled) {
+        chatInput.focus();
+    }
+
+    // Периодическая проверка новых сообщений
+    {% if chat.status == 'active' %}
+    setInterval(checkNewMessages, 5000);
+
+    async function checkNewMessages() {
+        try {
+            const response = await fetch('{% url "get_chat_messages" chat.id %}');
+            const data = await response.json();
+
+            if (data.success && data.messages.length > 0) {
+                // Проверяем, есть ли новые сообщения
+                const currentCount = document.querySelectorAll('.message').length;
+                if (data.messages.length > currentCount) {
+                    // Здесь можно реализовать обновление чата
+                    // пока просто обновим страницу для простоты
+                    console.log('Есть новые сообщения');
+                }
+            }
+        } catch (error) {
+            console.error('Error checking messages:', error);
+        }
+    }
+    {% endif %}
+
+    // Обработка нажатия Enter для отправки (без Shift)
+    chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            chatForm.dispatchEvent(new Event('submit'));
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="padding-top: 120px;">
+    <!-- Хлебные крошки -->
+    <nav aria-label="breadcrumb" style="margin-bottom: 2rem;">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'all_lawyers' %}">Все юристы</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ lawyer.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Профиль юриста -->
+    <div class="lawyer-detail-hero">
+        <div class="lawyer-detail-content">
+            <div class="text-center mb-4">
+                {% if lawyer.photo %}
+                <img src="{{ lawyer.photo.url }}" alt="{{ lawyer.name }}"
+                     style="width: 150px; height: 150px; border-radius: 50%; border: 4px solid var(--accent-gold); margin-bottom: 1.5rem;">
+                {% else %}
+                <div style="width: 150px; height: 150px; border-radius: 50%; background: rgba(255, 255, 255, 0.05);
+                          border: 4px solid var(--accent-gold); display: inline-flex; align-items: center;
+                          justify-content: center; margin-bottom: 1.5rem; font-size: 3rem; color: var(--text-gray);">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                {% endif %}
+
+                <h1 class="display-2 mb-2">{{ lawyer.name }}</h1>
+                <div class="badge" style="background: linear-gradient(135deg, var(--accent-gold), var(--gold-light));
+                                         color: var(--primary-dark); padding: 0.5rem 1.5rem; border-radius: 20px;
+                                         font-weight: 600; text-transform: uppercase;">
+                    {{ lawyer.get_specialization_display }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основная информация -->
+    <div class="row mb-5">
+        <div class="col-md-8">
+            <!-- Рейтинг и опыт -->
+            <div class="result-card mb-4">
+                <div class="result-card-header">
+                    <h3><i class="bi bi-award me-2"></i>Профессиональные данные</h3>
+                </div>
+                <div class="result-card-body">
+                    <div class="analysis-stats">
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="bi bi-star-fill"></i>
+                            </div>
+                            <span class="stat-label">Рейтинг</span>
+                            <span class="stat-value">{{ lawyer.rating|floatformat:1 }}/5.0</span>
+                        </div>
+
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="bi bi-briefcase"></i>
+                            </div>
+                            <span class="stat-label">Опыт работы</span>
+                            <span class="stat-value">{{ lawyer.experience }} лет</span>
+                        </div>
+
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <span class="stat-label">Завершенных дел</span>
+                            <span class="stat-value">{{ lawyer.cases_completed }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Биография -->
+            {% if lawyer.bio %}
+            <div class="result-card mb-4">
+                <div class="result-card-header">
+                    <h3><i class="bi bi-person-lines-fill me-2"></i>О юристе</h3>
+                </div>
+                <div class="result-card-body">
+                    <p style="color: var(--text-light); line-height: 1.6; white-space: pre-line;">{{ lawyer.bio }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Образование -->
+            {% if lawyer.education %}
+            <div class="result-card mb-4">
+                <div class="result-card-header">
+                    <h3><i class="bi bi-mortarboard me-2"></i>Образование</h3>
+                </div>
+                <div class="result-card-body">
+                    <p style="color: var(--text-light); line-height: 1.6; white-space: pre-line;">{{ lawyer.education }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <!-- Контактная информация -->
+            <div class="result-card mb-4">
+                <div class="result-card-header">
+                    <h3><i class="bi bi-telephone me-2"></i>Контакты</h3>
+                </div>
+                <div class="result-card-body">
+                    <div class="lawyer-stats">
+                        <div class="stat">
+                            <i class="bi bi-clock"></i>
+                            <span><strong>Время ответа:</strong> {{ lawyer.response_time }}</span>
+                        </div>
+
+                        <div class="stat">
+                            <i class="bi bi-calendar"></i>
+                            <span><strong>График:</strong> {{ lawyer.availability|default:"Пн-Пт, 9:00-18:00" }}</span>
+                        </div>
+
+                        <div class="stat">
+                            <i class="bi bi-cash-coin"></i>
+                            <span><strong>Стоимость:</strong> {{ lawyer.price|default:"Бесплатная консультация" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Статус -->
+            <div class="result-card mb-4">
+                <div class="result-card-header">
+                    <h3><i class="bi bi-info-circle me-2"></i>Статус</h3>
+                </div>
+                <div class="result-card-body">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                        <div style="width: 10px; height: 10px; border-radius: 50%;
+                                  background: {% if lawyer.is_available %}#10b981{% else %}#ef4444{% endif %};">
+                        </div>
+                        <span style="color: var(--text-light);">
+                            {% if lawyer.is_available %}Доступен для консультаций{% else %}Недоступен{% endif %}
+                        </span>
+                    </div>
+
+                    {% if lawyer.is_verified %}
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                        <i class="bi bi-shield-check" style="color: #10b981;"></i>
+                        <span style="color: var(--text-light);">Проверенный юрист</span>
+                    </div>
+                    {% endif %}
+
+                    {% if lawyer.is_premium %}
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="bi bi-gem" style="color: var(--accent-gold);"></i>
+                        <span style="color: var(--text-light);">Премиум юрист</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Кнопка начала чата -->
+            <div class="result-card">
+                <div class="result-card-body text-center">
+                    <h4 style="color: var(--text-white); margin-bottom: 1.5rem;">Начать консультацию</h4>
+
+                    {% if lawyer.is_available %}
+                        {% if request %}
+                        <button class="btn btn-primary btn-large w-100 mb-3 start-chat-btn"
+                                data-lawyer-id="{{ lawyer.id }}"
+                                data-lawyer-name="{{ lawyer.name }}">
+                            <i class="bi bi-chat-dots me-2"></i>Начать чат
+                        </button>
+                        {% else %}
+                        <p class="text-gray" style="margin-bottom: 1rem;">Для начала консультации опишите вашу ситуацию</p>
+                        <a href="/" class="btn btn-outline w-100">
+                            <i class="bi bi-plus-circle me-2"></i>Создать запрос
+                        </a>
+                        {% endif %}
+                    {% else %}
+                    <p class="text-gray" style="margin-bottom: 1rem;">Юрист временно недоступен</p>
+                    <button class="btn btn-outline w-100" disabled>
+                        <i class="bi bi-clock me-2"></i>Недоступен
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Начало чата с юристом
+    const startChatBtn = document.querySelector('.start-chat-btn');
+    if (startChatBtn) {
+        startChatBtn.addEventListener('click', function() {
+            const lawyerId = this.dataset.lawyerId;
+
+            // Показываем загрузку
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Соединение...';
+            this.disabled = true;
+
+            // Отправляем запрос на создание чата
+            fetch('{% url "start_chat" lawyer.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    request_id: '{{ request.id }}'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert('Ошибка: ' + data.error);
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка соединения. Попробуйте позже.');
+                this.innerHTML = originalText;
+                this.disabled = false;
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

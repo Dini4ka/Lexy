@@ -1,133 +1,282 @@
 {% extends 'base.html' %}
-
-{% block title %}Запрос #{{ request.id }} - LEXy{% endblock %}
+{% load static %}
 
 {% block content %}
-<div class="section-padding">
-    <div class="container">
-        <!-- Заголовок и статус -->
-        <div class="row mb-5">
-            <div class="col">
-                <h1 class="display-2 mb-3">Ваш запрос #{{ request.id }}</h1>
-                <div class="d-flex align-items-center gap-3">
-                    <span class="status-badge status-{{ request.status }}">
-                        {{ request.get_status_display }}
-                    </span>
-                    <span class="text-muted">
-                        <i class="bi bi-clock me-1"></i>
-                        Создан: {{ request.created_at|date:"d.m.Y H:i" }}
-                    </span>
-                </div>
-            </div>
+<div class="container results-container" style="padding-top: 120px;">
+    <!-- Статус анализа -->
+    <div class="analysis-status {% if request.status == 'analyzing' %}loading{% elif request.status == 'completed' %}success{% else %}error{% endif %}">
+        {% if request.status == 'analyzing' %}
+        <div class="status-icon"></div>
+        <h2>ИИ анализирует вашу ситуацию</h2>
+        <p class="text-gray mt-2">Пожалуйста, подождите несколько секунд...</p>
+        {% elif request.status == 'completed' %}
+        <div class="status-icon">
+            <i class="bi bi-check-circle-fill"></i>
         </div>
+        <h2>Анализ завершен!</h2>
+        <p class="text-gray mt-2">ИИ подготовил подробные рекомендации</p>
+        {% elif request.status == 'failed' %}
+        <div class="status-icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <h2>Ошибка анализа</h2>
+        <p class="text-gray mt-2">{{ request.error_message|default:"Попробуйте описать ситуацию иначе" }}</p>
+        {% endif %}
+    </div>
 
-        <div class="row">
-            <!-- Левая колонка: Детали запроса -->
-            <div class="col-lg-8">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h3 class="mb-0">Ваша ситуация</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="p-3 bg-light rounded">
-                            {{ request.problem_text|linebreaks }}
-                        </div>
-
-                        <div class="mt-4">
-                            <h5>Категория:</h5>
-                            <span class="badge bg-primary">{{ request.get_category_display }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Блок анализа ИИ (будет позже) -->
-                <div class="card mb-4">
-                    <div class="card-header bg-success text-white">
-                        <h3 class="mb-0">Анализ ИИ-ассистента</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="text-center py-4">
-                            <div class="spinner-border text-success" role="status">
-                                <span class="visually-hidden">Загрузка...</span>
-                            </div>
-                            <p class="mt-3">ИИ анализирует вашу ситуацию...</p>
-                            <p class="text-muted small">Это займет несколько секунд</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Правая колонка: Действия и информация -->
-            <div class="col-lg-4">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h3 class="mb-0">Что дальше?</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-4">
-                            <h5>1. Анализ ИИ</h5>
-                            <p class="small">ИИ изучает вашу ситуацию и готовит рекомендации по законам РФ.</p>
-                        </div>
-
-                        <div class="mb-4">
-                            <h5>2. Подбор юристов</h5>
-                            <p class="small">Система найдет подходящих юристов под вашу категорию дела.</p>
-                        </div>
-
-                        <div class="mb-4">
-                            <h5>3. Связь с юристом</h5>
-                            <p class="small">Вы сможете связаться с юристами, которые специализируются на вашем вопросе.</p>
-                        </div>
-
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <strong>Статус будет обновляться автоматически</strong>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Контактная информация (опционально) -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="mb-0">Хотите добавить контакты?</h3>
-                    </div>
-                    <div class="card-body">
-                        <p class="small mb-3">Добавьте телефон или email, чтобы юристы могли с вами связаться:</p>
-                        <form id="contactForm">
-                            <div class="mb-3">
-                                <label class="form-label small">Телефон</label>
-                                <input type="tel" class="form-control" placeholder="+7 (999) 123-45-67">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small">Email</label>
-                                <input type="email" class="form-control" placeholder="your@email.com">
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-sm w-100">Сохранить</button>
-                        </form>
-                        <p class="text-muted small mt-3">Контакты не обязательны. Вы можете остаться анонимным.</p>
-                    </div>
-                </div>
+    <!-- Исходный запрос -->
+    <div class="result-card">
+        <div class="result-card-header">
+            <h3>
+                <i class="bi bi-chat-left-text"></i>
+                Ваша ситуация
+            </h3>
+        </div>
+        <div class="result-card-body">
+            <p style="color: var(--text-light); font-size: 1.1rem; line-height: 1.6; margin-bottom: 1.5rem;">
+                {{ request.problem_text }}
+            </p>
+            <div style="color: var(--text-gray); font-size: 0.875rem;">
+                <i class="bi bi-clock me-1"></i>
+                Запрос создан: {{ request.created_at|date:"d.m.Y в H:i" }}
             </div>
         </div>
     </div>
+
+    <!-- Результат анализа -->
+    {% if request.status == 'completed' and response %}
+    <div id="analysisResult">
+        <!-- Краткий анализ -->
+        {% if response.analysis.summary %}
+        <div class="result-card">
+            <div class="result-card-header">
+                <h3>
+                    <i class="bi bi-lightbulb"></i>
+                    Краткий анализ ситуации
+                </h3>
+            </div>
+            <div class="result-card-body">
+                <p style="color: var(--text-light); font-size: 1.25rem; line-height: 1.6; margin-bottom: 2rem;">
+                    {{ response.analysis.summary }}
+                </p>
+
+                <div class="analysis-stats">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="bi bi-tag"></i>
+                        </div>
+                        <span class="stat-label">Категория</span>
+                        <span class="stat-value">{{ response.analysis.category|default:"Общее" }}</span>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="bi bi-speedometer2"></i>
+                        </div>
+                        <span class="stat-label">Срочность</span>
+                        <span class="stat-value">{{ response.analysis.urgency|default:"Средняя" }}</span>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <span class="stat-label">Уверенность</span>
+                        <span class="stat-value">{{ response.analysis.confidence|default:0.7|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Рекомендации -->
+        {% if response.recommendations %}
+        <div class="result-card">
+            <div class="result-card-header">
+                <h3>
+                    <i class="bi bi-list-check"></i>
+                    Рекомендации к действию
+                </h3>
+            </div>
+            <div class="result-card-body">
+                <div class="row" style="margin: -1rem;">
+                    <!-- Немедленные действия -->
+                    {% if response.recommendations.immediate_actions %}
+                    <div class="col-md-6" style="padding: 1rem;">
+                        <h4 style="color: var(--text-white); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="bi bi-lightning-charge" style="color: #f59e0b;"></i>
+                            Немедленные действия
+                        </h4>
+                        <ul class="recommendation-list">
+                            {% for action in response.recommendations.immediate_actions %}
+                            <li class="recommendation-item positive">
+                                {{ action }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Чего избегать -->
+                    {% if response.recommendations.avoid_actions %}
+                    <div class="col-md-6" style="padding: 1rem;">
+                        <h4 style="color: var(--text-white); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="bi bi-exclamation-octagon" style="color: #ef4444;"></i>
+                            Чего избегать
+                        </h4>
+                        <ul class="recommendation-list">
+                            {% for action in response.recommendations.avoid_actions %}
+                            <li class="recommendation-item negative">
+                                {{ action }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Таймлайн -->
+        {% if response.recommendations.timeline %}
+        <div class="result-card">
+            <div class="result-card-header">
+                <h3>
+                    <i class="bi bi-calendar-week"></i>
+                    План действий по времени
+                </h3>
+            </div>
+            <div class="result-card-body">
+                <div class="timeline">
+                    {% if response.recommendations.timeline.24_hours %}
+                    <div class="timeline-item">
+                        <div class="timeline-time">24 часа</div>
+                        <div class="timeline-content">{{ response.recommendations.timeline.24_hours }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if response.recommendations.timeline.72_hours %}
+                    <div class="timeline-item">
+                        <div class="timeline-time">72 часа</div>
+                        <div class="timeline-content">{{ response.recommendations.timeline.72_hours }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if response.recommendations.timeline.next_steps %}
+                    <div class="timeline-item">
+                        <div class="timeline-time">Дальнейшие шаги</div>
+                        <div class="timeline-content">{{ response.recommendations.timeline.next_steps }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Правовые основы -->
+        {% if response.legal_references.codes %}
+        <div class="result-card">
+            <div class="result-card-header">
+                <h3>
+                    <i class="bi bi-journal-text"></i>
+                    Правовые основы
+                </h3>
+            </div>
+            <div class="result-card-body">
+                <ul class="legal-list">
+                    {% for code in response.legal_references.codes %}
+                    <li class="legal-item">
+                        <i class="bi bi-file-text legal-icon"></i>
+                        <span>{{ code }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                {% if response.legal_references.explanations %}
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                    <h4 style="color: var(--text-white); margin-bottom: 1rem;">Пояснения к законодательству:</h4>
+                    <div style="color: var(--text-light); line-height: 1.6;">
+                        {% for explanation in response.legal_references.explanations %}
+                        <p style="margin-bottom: 0.75rem;">{{ explanation }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Дисклеймер -->
+        {% if response.disclaimer %}
+        <div class="disclaimer-box">
+            <div class="disclaimer-icon">
+                <i class="bi bi-info-circle"></i>
+            </div>
+            <div class="disclaimer-content">
+                <div class="disclaimer-title">Важная информация</div>
+                <div class="disclaimer-text">{{ response.disclaimer }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Кнопки действий -->
+    <div class="actions-bar">
+        <a href="/" class="btn btn-outline">
+            <i class="bi bi-arrow-left me-2"></i>Вернуться на главную
+        </a>
+
+        {% if request.status == 'completed' %}
+        <div class="btn-group">
+            <button class="btn btn-outline" onclick="window.print()">
+                <i class="bi bi-printer me-2"></i>Распечатать
+            </button>
+            <!-- ИСПРАВЛЕННАЯ СТРОКА: вместо якоря используем URL -->
+            <a href="{% url 'find_lawyers' request.id %}" class="btn btn-primary">
+                <i class="bi bi-person-badge me-2"></i>Подобрать юриста
+            </a>
+        </div>
+        {% endif %}
+    </div>
 </div>
 
+<!-- JavaScript для обновления статуса -->
 <script>
-// Простая логика обновления статуса
-function updateStatus() {
-    fetch(`/api/request/{{ request.id }}/status/`)
-        .then(response => response.json())
-        .then(data => {
-            const statusBadge = document.querySelector('.status-badge');
-            if (data.status !== '{{ request.status }}') {
-                // Если статус изменился, обновляем страницу
-                window.location.reload();
-            }
-        })
-        .catch(error => console.error('Error:', error));
-}
+document.addEventListener('DOMContentLoaded', function() {
+    {% if request.status == 'analyzing' %}
+    // Автоматическое обновление статуса
+    function checkAnalysisStatus() {
+        fetch('/api/check-analysis/{{ request.id }}/')
+            .then(response => {
+                if (!response.ok) throw new Error('Network error');
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'completed' || data.status === 'failed') {
+                    // Перезагружаем страницу при завершении анализа
+                    setTimeout(() => window.location.reload(), 500);
+                } else {
+                    // Продолжаем проверку через 2 секунды
+                    setTimeout(checkAnalysisStatus, 2000);
+                }
+            })
+            .catch(error => {
+                console.error('Error checking status:', error);
+                // При ошибке продолжаем проверку через 5 секунд
+                setTimeout(checkAnalysisStatus, 5000);
+            });
+    }
 
-// Проверяем статус каждые 5 секунд
-setInterval(updateStatus, 5000);
+    // Запускаем первую проверку через 1 секунду
+    setTimeout(checkAnalysisStatus, 1000);
+    {% endif %}
+
+    // Плавная прокрутка при загрузке
+    setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+});
 </script>
 {% endblock %}

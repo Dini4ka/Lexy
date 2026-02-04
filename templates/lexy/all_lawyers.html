@@ -1,0 +1,576 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container lawyers-page">
+    <!-- Заголовок -->
+    <div class="page-header">
+        <h1 class="page-title">Наши юристы</h1>
+        <p class="page-subtitle">
+            Профессиональные специалисты с многолетним опытом работы в различных областях права
+        </p>
+    </div>
+
+    <!-- Главный баннер -->
+    <div class="professionals-banner">
+        <div class="professionals-banner-content">
+            <div class="professionals-banner-icon">
+                <i class="bi bi-award"></i>
+            </div>
+            <div class="professionals-banner-text">
+                <h3>🏆 Команда профессионалов</h3>
+                <p>Каждый юрист нашей команды имеет узкую специализацию и многолетний опыт работы.
+                Мы гарантируем конфиденциальность и профессиональный подход к каждой ситуации.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Список юристов -->
+    <div class="lawyers-section">
+        <div class="section-header">
+            <h2 class="section-title">Наши специалисты</h2>
+            <p class="section-subtitle">Выберите юриста по вашей проблеме</p>
+        </div>
+
+        {% if lawyers %}
+        <div class="lawyers-grid">
+            {% for lawyer in lawyers %}
+            <div class="lawyer-card" data-specialization="{{ lawyer.id }}">
+                <!-- Фото юриста -->
+                <div class="lawyer-photo-section">
+                    <div class="lawyer-photo-placeholder">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    <div class="online-status">
+                        <span class="status-dot online"></span>
+                        Онлайн
+                    </div>
+                </div>
+
+                <!-- Информация о юристе -->
+                <div class="lawyer-info-section">
+                    <h3 class="lawyer-name">{{ lawyer.name }}</h3>
+                    <div class="lawyer-specialization">
+                        <i class="bi bi-briefcase"></i>
+                        {{ lawyer.specialization }}
+                    </div>
+
+                    <div class="lawyer-experience">
+                        <div class="experience-item">
+                            <i class="bi bi-clock-history"></i>
+                            <span>{{ lawyer.response_time }}</span>
+                        </div>
+                        <div class="experience-item">
+                            <i class="bi bi-star"></i>
+                            <span>Профессионал</span>
+                        </div>
+                    </div>
+
+                    <!-- Описание -->
+                    <div class="lawyer-description">
+                        <p>{{ lawyer.personality|truncatechars:120 }}</p>
+                    </div>
+
+                    <!-- Кнопки -->
+                    <div class="lawyer-actions">
+                        <a href="{% url 'lawyer_detail' specialization_code=lawyer.id %}" class="btn btn-profile">
+                            <i class="bi bi-person-badge"></i>
+                            Профиль
+                        </a>
+                        {% if request.session.current_request_id %}
+                        <a href="{% url 'auto_start_chat' request.session.current_request_id lawyer.id %}" class="btn btn-consult">
+                            <i class="bi bi-chat-left-text"></i>
+                            Консультация
+                        </a>
+                        {% else %}
+                        <a href="{% url 'lawyer_detail' specialization_code=lawyer.id %}" class="btn btn-consult">
+                            <i class="bi bi-chat-left-text"></i>
+                            Консультация
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-people"></i>
+            </div>
+            <h3>Юристы временно недоступны</h3>
+            <p>Пожалуйста, попробуйте позже или обратитесь в нашу поддержку.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Преимущества -->
+    <div class="benefits-section">
+        <h2 class="section-title">Почему выбирают наших юристов</h2>
+
+        <div class="benefits-grid">
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h4>Конфиденциальность</h4>
+                <p>Полная анонимность и защита ваших персональных данных</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <h4>Быстрый ответ</h4>
+                <p>Среднее время ответа — 15-60 минут в зависимости от специалиста</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+                <h4>Прозрачные условия</h4>
+                <p>Первая консультация бесплатно, без скрытых платежей</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <h4>Детальный анализ</h4>
+                <p>Каждая ситуация изучается индивидуально и всесторонне</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Основные стили страницы */
+.lawyers-page {
+    padding-top: 120px;
+    padding-bottom: 60px;
+}
+
+/* Заголовок страницы */
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text-white);
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #fff, #f4d03f);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.page-subtitle {
+    font-size: 1.2rem;
+    color: var(--text-gray);
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* Баннер профессионалов */
+.professionals-banner {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(10, 10, 10, 0.2));
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 4rem;
+    backdrop-filter: blur(10px);
+}
+
+.professionals-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.professionals-banner-icon {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    background: rgba(212, 175, 55, 0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: var(--accent-gold);
+}
+
+.professionals-banner-text h3 {
+    font-size: 1.8rem;
+    color: var(--text-white);
+    margin-bottom: 1rem;
+}
+
+.professionals-banner-text p {
+    color: var(--text-light);
+    line-height: 1.7;
+    font-size: 1.1rem;
+}
+
+/* Секция с юристами */
+.lawyers-section {
+    margin-bottom: 5rem;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.section-title {
+    font-size: 2.2rem;
+    color: var(--text-white);
+    margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+    color: var(--text-gray);
+    font-size: 1.1rem;
+}
+
+/* Сетка юристов */
+.lawyers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+/* Карточка юриста */
+.lawyer-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.lawyer-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(212, 175, 55, 0.3);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Фото юриста */
+.lawyer-photo-section {
+    padding: 2rem 2rem 1rem;
+    text-align: center;
+    position: relative;
+}
+
+.lawyer-photo-placeholder {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(244, 208, 63, 0.1));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: var(--accent-gold);
+    border: 3px solid rgba(212, 175, 55, 0.3);
+}
+
+.online-status {
+    position: absolute;
+    bottom: 1rem;
+    right: 2rem;
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-dot.online {
+    background: #10b981;
+}
+
+/* Информация о юристе */
+.lawyer-info-section {
+    padding: 1.5rem 2rem 2rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.lawyer-name {
+    font-size: 1.4rem;
+    color: var(--text-white);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.lawyer-specialization {
+    color: var(--accent-gold);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.lawyer-experience {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.experience-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-gray);
+    font-size: 0.9rem;
+}
+
+.experience-item i {
+    color: var(--accent-gold);
+}
+
+.lawyer-description {
+    color: var(--text-light);
+    line-height: 1.6;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    flex-grow: 1;
+}
+
+/* Кнопки */
+.lawyer-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: auto;
+}
+
+.lawyer-actions .btn {
+    flex: 1;
+    padding: 0.8rem;
+    border-radius: 12px;
+    font-weight: 500;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: none;
+}
+
+.btn-profile {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-light);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-profile:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-white);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-consult {
+    background: linear-gradient(135deg, var(--accent-gold), var(--gold-light));
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+.btn-consult:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3);
+}
+
+/* Секция преимуществ */
+.benefits-section {
+    padding-top: 3rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.benefits-section .section-title {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.benefit-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.benefit-card:hover {
+    border-color: rgba(212, 175, 55, 0.2);
+    transform: translateY(-5px);
+}
+
+.benefit-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1.5rem;
+    background: rgba(212, 175, 55, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: var(--accent-gold);
+}
+
+.benefit-card h4 {
+    color: var(--text-white);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.benefit-card p {
+    color: var(--text-gray);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* Пустое состояние */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: var(--accent-gold);
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    color: var(--text-white);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.empty-state p {
+    color: var(--text-gray);
+    max-width: 400px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 2.2rem;
+    }
+
+    .professionals-banner-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .professionals-banner-icon {
+        width: 70px;
+        height: 70px;
+        font-size: 2rem;
+    }
+
+    .lawyers-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lawyer-actions {
+        flex-direction: column;
+    }
+
+    .benefits-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-title {
+        font-size: 1.8rem;
+    }
+
+    .professionals-banner {
+        padding: 1.5rem;
+    }
+
+    .lawyer-card {
+        margin: 0 0.5rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Анимация появления карточек
+    const lawyerCards = document.querySelectorAll('.lawyer-card');
+
+    lawyerCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+
+        setTimeout(() => {
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+
+    // Плавный скролл при клике на кнопки
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

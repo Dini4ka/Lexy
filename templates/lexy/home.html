@@ -48,7 +48,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary btn-large">
+                    <button type="submit" class="btn btn-primary btn-large" id="submitBtn">
                         <i class="bi bi-robot me-2"></i>Проанализировать ситуацию
                     </button>
                     <p class="form-note">
@@ -57,16 +57,7 @@
                 </div>
             </form>
 
-            <div id="formSuccess" style="display: none;">
-                <div class="text-center py-5">
-                    <div class="mb-4">
-                        <i class="bi bi-check-circle" style="font-size: 4rem; color: var(--accent-gold);"></i>
-                    </div>
-                    <h3 class="mb-3">Запрос отправлен!</h3>
-                    <p class="lead mb-4">ИИ анализирует вашу ситуацию. Это займет несколько секунд.</p>
-                    <a href="#" id="resultLink" class="btn btn-primary">Перейти к результатам</a>
-                </div>
-            </div>
+            <!-- Убрал блок formSuccess, теперь сразу редирект -->
         </div>
     </div>
 </section>
@@ -116,7 +107,7 @@
         </p>
 
         <div class="text-center">
-            <a href="/lawyers/" class="btn btn-outline btn-large">
+            <a href="{% url 'all_lawyers' %}" class="btn btn-outline btn-large">
                 <i class="bi bi-people me-2"></i>Посмотреть всех юристов
             </a>
         </div>
@@ -127,9 +118,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('emergencyForm');
     const problemText = document.getElementById('problemText');
-    const formSuccess = document.getElementById('formSuccess');
-    const resultLink = document.getElementById('resultLink');
     const charCounter = document.getElementById('charCounter');
+    const submitBtn = document.getElementById('submitBtn');
 
     // Счетчик символов
     problemText.addEventListener('input', function() {
@@ -145,21 +135,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Обработка формы
+    // Обработка формы с автоматическим редиректом
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
         if (problemText.value.trim().length < 20) {
             alert('Опишите проблему подробнее (минимум 20 символов)');
+            problemText.focus();
             return;
         }
 
-        const submitBtn = form.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerHTML;
 
         // Показываем загрузку
         submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Анализируем...';
         submitBtn.disabled = true;
+
+        // Добавляем класс загрузки
+        submitBtn.classList.add('loading');
 
         try {
             // Отправляем запрос
@@ -177,28 +170,127 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (data.success) {
-                // Показываем успех
-                form.style.display = 'none';
-                formSuccess.style.display = 'block';
-                resultLink.href = data.redirect_url;
-
-                // Автопереход через 3 секунды
-                setTimeout(() => {
-                    window.location.href = data.redirect_url;
-                }, 3000);
+                // НЕ показываем успех, а сразу редиректим
+                window.location.href = data.redirect_url;
             } else {
-                alert(data.error || 'Произошла ошибка');
+                // Показываем ошибку
+                showError(data.error || 'Произошла ошибка. Попробуйте снова.');
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
             }
 
         } catch (error) {
             console.error('Error:', error);
-            alert('Ошибка соединения. Проверьте интернет и попробуйте снова.');
+            showError('Ошибка соединения. Проверьте интернет и попробуйте снова.');
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
         }
     });
+
+    // Функция показа ошибки
+    function showError(message) {
+        // Создаем красивый alert
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'error-alert';
+        alertDiv.innerHTML = `
+            <div style="
+                background: rgba(239, 68, 68, 0.1);
+                border: 1px solid rgba(239, 68, 68, 0.3);
+                border-radius: var(--radius-md);
+                padding: 1rem 1.5rem;
+                margin-top: 1rem;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                color: #ef4444;
+            ">
+                <i class="bi bi-exclamation-circle"></i>
+                <span>${message}</span>
+            </div>
+        `;
+
+        // Вставляем после формы
+        form.parentNode.insertBefore(alertDiv, form.nextSibling);
+
+        // Удаляем через 5 секунд
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+
+    // Плавная прокрутка к форме
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            if (this.getAttribute('href') === '#') return;
+
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
 });
+
+// Добавляем стиль для кнопки загрузки
+const style = document.createElement('style');
+style.textContent = `
+    .btn.loading {
+        position: relative;
+        pointer-events: none;
+    }
+
+    .btn.loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
 </script>
+
+<style>
+/* Дополнительные стили для улучшения UX */
+.error-alert {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Плавный скролл */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Улучшаем фокус на текстовом поле */
+.form-control:focus {
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+</style>
 {% endblock %}
